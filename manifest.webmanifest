@@ -1,0 +1,26 @@
+{
+  "name": "Cozinha Divertida",
+  "short_name": "Cozinha",
+  "id": "./",
+  "description": "Um jogo de culinária divertido e acessível, com receitas, sons e atividades interativas.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FF9800",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
