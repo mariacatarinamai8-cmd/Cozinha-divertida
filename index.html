@@ -91,6 +91,13 @@ button .ic{display:block;font-size:2rem;line-height:1.2}
 <section aria-labelledby="h6">
 <h2 id="h6">Salvamento</h2>
 <p id="sv"></p>
+<p>O jogo salva sozinho. Se quiser guardar uma cópia sem usar código, use os botões abaixo.</p>
+<button id="sa" type="button">Salvar agora</button>
+<button id="sf" type="button">Salvar progresso em arquivo</button>
+<button id="ss" type="button" style="display:none">Compartilhar arquivo de progresso</button>
+<button id="lf" type="button">Carregar progresso de um arquivo</button>
+<input id="fi" type="file" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px">
+<h3>Código de progresso (opcional)</h3>
 <label for="cod">Código de progresso</label>
 <textarea id="cod" rows="3" style="width:100%;box-sizing:border-box;font:inherit"></textarea>
 <button id="gc" type="button">Gerar código do meu progresso</button>
@@ -115,10 +122,10 @@ var R=[
 {n:"Vitamina de banana",i:{banana:2,leite:1,acucar:1},p:16,s:[["mix","Bater no liquidificador",5]]},
 {n:"Limonada gelada",i:{limao:3,acucar:1,gelo:2},p:14,s:[["mix","Espremer os limões",4],["mix","Mexer a jarra",3]]}
 ];
-var S={c:40,inv:{},pts:0,done:0,sh:[]};
+var S={c:40,inv:{},pts:0,done:0,sh:[]},LOADED=false;
 function sget(){try{var v=localStorage.getItem("cozinha");if(v)return v}catch(e){}try{var v2=sessionStorage.getItem("cozinha");if(v2)return v2}catch(e){}try{if(window.name&&window.name.indexOf("cozinha:")==0)return window.name.slice(8)}catch(e){}return null}
 function sput(v){var ok=false;try{localStorage.setItem("cozinha",v);ok=localStorage.getItem("cozinha")==v}catch(e){}try{sessionStorage.setItem("cozinha",v)}catch(e){}try{window.name="cozinha:"+v}catch(e){}return ok}
-try{var sv=JSON.parse(sget()||"null");if(sv&&typeof sv.c=="number")S=sv}catch(e){}S.inv=S.inv||{};S.sh=S.sh||[];
+try{var sv=JSON.parse(sget()||"null");if(sv&&typeof sv.c=="number"){S=sv;LOADED=true}}catch(e){}S.inv=S.inv||{};S.sh=S.sh||[];
 R=R.concat([
 {n:"Pizza de queijo",i:{farinha:2,fermento:1,tomate:2,queijo:2,presunto:1},p:40,s:[["mix","Amassar a massa",4],["mix","Picar os recheios",4],["oven","Assar no forno",6]]},
 {n:"Macarronada à bolonhesa",i:{macarrao:2,carne:1,tomate:2,cebola:1,alho:1},p:38,s:[["mix","Picar a cebola e o alho",4],["oven","Refogar a carne",4],["mix","Misturar o macarrão com o molho",3]]},
@@ -367,7 +374,7 @@ R.forEach(function(r){var ns=[];r.s.forEach(function(x){var mm=/^(Picar|Cortar) 
 if(SR.test(r.n)){r.i.sal=1;var ix=-1;r.s.forEach(function(x,j){if(ix<0&&x[0]=="oven"&&!/cafeteira/.test(x[1]))ix=j});if(ix<0)ix=r.s.length-1;r.s.splice(ix,0,sal)}});
 R.forEach(function(r){r.p=Math.round(r.p*1.25)});
 var K=null,tm=[];
-function save(){var th=document.documentElement.getAttribute("data-theme");S.dark=th=="dark"?true:th=="light"?false:null;S.mv=MV;S.sv=SV;S.mon=mon;var ok=sput(JSON.stringify(S));$("sv").textContent=ok?"Progresso salvo automaticamente neste aparelho.":"Este navegador não guarda o progresso sozinho. Gere o código de progresso e guarde em um lugar seguro."}
+function save(){var th=document.documentElement.getAttribute("data-theme");S.dark=th=="dark"?true:th=="light"?false:null;S.mv=MV;S.sv=SV;S.mon=mon;var ok=sput(JSON.stringify(S));$("sv").textContent=ok?"Progresso salvo automaticamente neste aparelho.":"Este navegador não guarda o progresso sozinho. Use o botão Salvar progresso em arquivo para guardar uma cópia."}
 function say(t){msg.textContent=t;live.textContent="";setTimeout(function(){live.textContent=t},50)}
 function tone(f,d,t,w,v){if(muted)return;try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();var o=ac.createOscillator(),g=ac.createGain(),s=ac.currentTime+(t||0);o.type=w||"sine";o.frequency.value=f;o.connect(g);g.connect(ac.destination);g.gain.setValueAtTime(Math.max(.0001,(v||.18)*SV),s);g.gain.exponentialRampToValueAtTime(.001,s+d);o.start(s);o.stop(s+d)}catch(e){}}
 function seq(a,w){a.forEach(function(f,i){tone(f,.14,i*.13,w)})}
@@ -502,7 +509,15 @@ function temaBtn(){var b=$("tema"),d=isDark();b.setAttribute("aria-pressed",d);b
 $("tema").onclick=function(){var d=!isDark();document.documentElement.setAttribute("data-theme",d?"dark":"light");save();temaBtn();say(d?"Tema escuro ligado.":"Tema escuro desligado.")};
 if(S.dark===true||S.dark===false)document.documentElement.setAttribute("data-theme",S.dark?"dark":"light");temaBtn();
 applyVol();mbtx();
-render();say("Bem-vindo à Cozinha Divertida! Você tem "+S.c+" moedas. Use as abas: Receitas para escolher o que cozinhar, Cozinha para preparar, Mercadinho para comprar e Lojinha para vender.");
+function ap(v){clear();K=null;S=v;S.inv=S.inv||{};S.sh=S.sh||[];$("go").disabled=true;$("go").textContent="Nenhuma receita em andamento";render()}
+function mkf(){return new File([JSON.stringify(S)],"progresso-cozinha-divertida.json",{type:"application/json"})}
+$("sa").onclick=function(){save();say($("sv").textContent)};
+$("sf").onclick=function(){try{save();var b=new Blob([JSON.stringify(S)],{type:"application/json"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="progresso-cozinha-divertida.json";document.body.appendChild(a);a.click();setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(u)},1000);say("Arquivo de progresso gerado: progresso-cozinha-divertida.json. Procure na pasta de downloads.")}catch(e){say("Não consegui gerar o arquivo neste navegador.")}};
+try{if(navigator.canShare&&navigator.canShare({files:[mkf()]}))$("ss").style.display=""}catch(e){}
+$("ss").onclick=function(){try{save();navigator.share({files:[mkf()],title:"Progresso da Cozinha Divertida"}).then(function(){say("Progresso compartilhado.")},function(e){say(e&&e.name=="AbortError"?"Compartilhamento cancelado.":"Não consegui compartilhar o arquivo.")})}catch(e){say("Não consegui compartilhar o arquivo.")}};
+$("lf").onclick=function(){$("fi").value="";$("fi").click()};
+$("fi").onchange=function(){var f=this.files&&this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var v=JSON.parse(r.result);if(typeof v.c!="number")throw 1;ap(v);say("Progresso carregado do arquivo. Você tem "+S.c+" moedas.")}catch(e){say("Arquivo inválido. Escolha o arquivo progresso-cozinha-divertida.json.")}};r.onerror=function(){say("Não consegui ler o arquivo.")};r.readAsText(f)};
+render();say((LOADED?"Seu progresso salvo foi carregado. ":"")+"Bem-vindo à Cozinha Divertida! Você tem "+S.c+" moedas. Use as abas: Receitas para escolher o que cozinhar, Cozinha para preparar, Mercadinho para comprar e Lojinha para vender.");
 })();
 </script>
 </body>
